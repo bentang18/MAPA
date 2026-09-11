@@ -1,0 +1,5 @@
+{
+  "src/speech_decoding/extractors/view.py": "a5e41fca320ae89b46bef61fd2b4ce48c26dbc691cc219ad4cfff92a1e9a7ee9",
+  "src/speech_decoding/extractors/reference.py": "9eb217a4b905866b0cc04a91d8c4fa276dd07a04ee646a93906f7b32533ba937",
+  "src/speech_decoding/extractors/normalize.py": "8259192526611589dc85f452bbab921519393d9860f4e2159dad0ccbe723066c"
+}

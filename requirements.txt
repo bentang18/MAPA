@@ -1,0 +1,15 @@
+# The model itself needs only torch. numpy appears at the data boundary.
+torch>=2.6
+numpy>=1.26
+
+# The eval scripts under evals/ additionally need:
+pandas>=2.0
+scikit-learn>=1.4
+scipy>=1.11
+matplotlib>=3.8
+
+# The evaluation DATA path (evals/, mapa/data/word_events.py, mapa/probe/) additionally needs
+# the Neuroprobe package itself, for its task configuration and its packaged transcript and
+# pitch/volume features. It is imported lazily, so the encoder API above works without it.
+# Install it from the Neuroprobe repository; it is not declared here because it is not a
+# dependency of the model.

@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: If you use this software or its checkpoints, please cite the paper below.
+title: "MAPA: Masked Autoencoder with Positional and Anatomical encodings"
+abstract: >-
+  MAPA applies an anatomical region embedding and a relative positional encoding to learn
+  neural representations from unlabeled intracranial EEG recordings. The encoder is
+  pretrained by masked autoencoding and frozen for downstream evaluation.
+type: software
+license: Apache-2.0
+repository-code: https://github.com/bentang18/MAPA
+version: 0.1.0
+
+authors:
+  - given-names: Ben
+    family-names: Tang
+    affiliation: Duke University
+  - given-names: Zachary
+    family-names: Spalding
+    affiliation: Duke University
+  - given-names: Gregory B.
+    family-names: Cogan
+    affiliation: Duke University
+    email: gregory.cogan@duke.edu
+
+preferred-citation:
+  type: unpublished
+  title: Pretraining for Sample-Efficient Neural Interfaces
+  year: 2026
+  authors:
+    - given-names: Ben
+      family-names: Tang
+    - given-names: Zachary
+      family-names: Spalding
+    - given-names: Gregory B.
+      family-names: Cogan

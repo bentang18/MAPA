@@ -1,0 +1,68 @@
+{
+  "recipe": "mapa-v0.1.0",
+  "sample_rate_hz": 2048,
+  "frame_rate_hz": 32,
+  "resample": "scipy.signal.resample_poly; default Kaiser window; input/output float32",
+  "model_reference": "mean of surviving selected contacts per shaft, before model filters",
+  "model_notches_hz": [
+    60,
+    120,
+    180,
+    240,
+    300
+  ],
+  "highpass_hz": 0.5,
+  "filter": "MNE default FIR; zero phase; reflect_limited padding",
+  "contact_exclusions": "supplied by caller",
+  "artifact_cleaning": "external contact detection and window rejection",
+  "model_input_clip_z": [
+    15.0,
+    15.0,
+    20.0
+  ],
+  "bands": [
+    {
+      "name": "slow",
+      "n_fft": 1024,
+      "hop": 64,
+      "bins_inclusive": [
+        1,
+        7
+      ]
+    },
+    {
+      "name": "mid",
+      "n_fft": 256,
+      "hop": 64,
+      "bins_inclusive": [
+        2,
+        7
+      ]
+    },
+    {
+      "name": "fast",
+      "n_fft": 128,
+      "hop": 64,
+      "bins_inclusive": [
+        4,
+        10
+      ]
+    }
+  ],
+  "stft": {
+    "window": "periodic Hann",
+    "center": true,
+    "padding": "reflect",
+    "normalized": false,
+    "representation": "magnitude; no log"
+  },
+  "normalization": {
+    "fit": "entire session, separately per contact and frequency bin",
+    "median": "torch lower median",
+    "mad_scale": 1.4826,
+    "sigma_floor": 1e-06,
+    "constant_bins": "zero"
+  },
+  "window_start": "round(seconds * 32), ties to even",
+  "voltage_scaling": "none"
+}

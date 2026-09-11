@@ -1,0 +1,66 @@
+MAPA
+Copyright 2026 Ben Tang, Zachary Spalding, and Gregory B. Cogan
+
+================================================================================
+What each license covers
+================================================================================
+
+Source code in this repository is licensed under the Apache License, Version 2.0.
+See LICENSE.
+
+The released model checkpoints are licensed under the Creative Commons
+Attribution 4.0 International License (CC BY 4.0). See LICENSE-WEIGHTS. This
+covers:
+
+    mapa_vits384.pt
+    mapa_vits384_no_region.pt
+    mapa_vits384_no_relpos.pt
+    mapa_vits384_no_priors.pt
+
+================================================================================
+Attribution
+================================================================================
+
+The checkpoints were pretrained on the Brain Treebank dataset, released under
+CC BY 4.0 at https://braintreebank.dev/. Anyone using the checkpoints, or work
+derived from them, must credit:
+
+    Christopher Wang, Adam Yaari, Aaditya K Singh, Vighnesh Subramaniam,
+    Dana Rosenfarb, Jan DeWitt, Pranav Misra, Joseph R Madsen, Scellig Stone,
+    Gabriel Kreiman, Boris Katz, Ignacio Cases, and Andrei Barbu.
+    Brain Treebank: Large-scale intracranial recordings from naturalistic
+    language stimuli. Advances in Neural Information Processing Systems 37
+    (NeurIPS 2024), Datasets and Benchmarks Track.
+
+The evaluation follows Neuroprobe, https://github.com/insight-neuro/neuroprobe,
+released under the MIT License, Copyright (c) 2025 Andrii Zahorodnii,
+collaborators and contributors.
+
+================================================================================
+Vendored Neuroprobe material
+================================================================================
+
+mapa/data/_neuroprobe_lite_tables.py includes tables copied from Neuroprobe
+commit c7b955b0a31464f4a5eec3f3bd78ff29841d61ac. The upstream license follows:
+
+MIT License
+
+Copyright (c) 2025 Andrii Zahorodnii, collaborators and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
