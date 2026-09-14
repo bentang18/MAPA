@@ -5,7 +5,6 @@
 Ben Tang, Zachary Spalding, Gregory B. Cogan · Duke University
 
 [![Project page](https://img.shields.io/badge/project-page-1f6feb.svg)](https://bentang18.github.io/mapa-page/)
-[![Neuroprobe](https://img.shields.io/badge/Neuroprobe-leaderboard-2da44e.svg)](https://github.com/insight-neuro/neuroprobe)
 [![Checkpoints](https://img.shields.io/badge/checkpoints-v0.1.0-8250df.svg)](https://github.com/bentang18/MAPA/releases/tag/v0.1.0)
 [![Code license](https://img.shields.io/badge/code-Apache--2.0-lightgrey.svg)](LICENSE)
 [![Weights license](https://img.shields.io/badge/weights-CC%20BY%204.0-lightgrey.svg)](LICENSE-WEIGHTS)
