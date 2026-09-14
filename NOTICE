@@ -5,12 +5,9 @@ Copyright 2026 Ben Tang, Zachary Spalding, and Gregory B. Cogan
 What each license covers
 ================================================================================
 
-Source code in this repository is licensed under the Apache License, Version 2.0.
-See LICENSE.
-
-The released model checkpoints are licensed under the Creative Commons
-Attribution 4.0 International License (CC BY 4.0). See LICENSE-WEIGHTS. This
-covers:
+Source code and released model checkpoints are licensed under the Apache License,
+Version 2.0. See LICENSE. LICENSE-WEIGHTS contains the same Apache 2.0 license
+for standalone checkpoint downloads. The checkpoint license covers:
 
     mapa_vits384.pt
     mapa_vits384_no_region.pt
@@ -18,12 +15,21 @@ covers:
     mapa_vits384_no_priors.pt
 
 ================================================================================
+Prior checkpoint licensing
+================================================================================
+
+Before September 14, 2026, these checkpoints were distributed under CC BY 4.0.
+That earlier license grant remains valid; this Apache 2.0 release does not revoke
+it. The checkpoint files are unchanged. The original license is preserved at:
+https://github.com/bentang18/MAPA/blob/v0.1.0/LICENSE-WEIGHTS
+
+================================================================================
 Attribution
 ================================================================================
 
 The checkpoints were pretrained on the Brain Treebank dataset, released under
-CC BY 4.0 at https://braintreebank.dev/. Anyone using the checkpoints, or work
-derived from them, must credit:
+CC BY 4.0 at https://braintreebank.dev/. The dataset retains its own license.
+Attribution for the pretraining data:
 
     Christopher Wang, Adam Yaari, Aaditya K Singh, Vighnesh Subramaniam,
     Dana Rosenfarb, Jan DeWitt, Pranav Misra, Joseph R Madsen, Scellig Stone,

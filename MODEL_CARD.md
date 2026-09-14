@@ -131,8 +131,8 @@ the target accuracy are retained as failures in the label-saving analysis.
 
 ## License and attribution
 
-Code: [Apache 2.0](LICENSE). Checkpoints: [CC BY 4.0](LICENSE-WEIGHTS).
-The checkpoints carry the Brain Treebank attribution in [NOTICE](NOTICE).
+Code and checkpoints: [Apache 2.0](LICENSE).
+The checkpoints carry the Brain Treebank attribution in [NOTICE](NOTICE), which also records prior checkpoint licensing.
 Evaluation follows [Neuroprobe](https://github.com/insight-neuro/neuroprobe).
 
 ## Citation

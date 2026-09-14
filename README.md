@@ -6,8 +6,7 @@ Ben Tang, Zachary Spalding, Gregory B. Cogan · Duke University
 
 [![Project page](https://img.shields.io/badge/project-page-1f6feb.svg)](https://bentang18.github.io/mapa-page/)
 [![Checkpoints](https://img.shields.io/badge/checkpoints-v0.1.0-8250df.svg)](https://github.com/bentang18/MAPA/releases/tag/v0.1.0)
-[![Code license](https://img.shields.io/badge/code-Apache--2.0-lightgrey.svg)](LICENSE)
-[![Weights license](https://img.shields.io/badge/weights-CC%20BY%204.0-lightgrey.svg)](LICENSE-WEIGHTS)
+[![License](https://img.shields.io/badge/license-Apache--2.0-lightgrey.svg)](LICENSE)
 
 MAPA is a masked autoencoder that learns neural representations from unlabeled intracranial EEG.
 An anatomical region embedding and a relative positional encoding let the model learn across
@@ -209,8 +208,8 @@ submission export. CUDA and upstream Neuroprobe checks are skipped when unavaila
 
 ## License
 
-Code: [Apache 2.0](LICENSE). Checkpoints: [CC BY 4.0](LICENSE-WEIGHTS).
-See [NOTICE](NOTICE) for attribution.
+Code and checkpoints: [Apache 2.0](LICENSE).
+See [NOTICE](NOTICE) for attribution and prior checkpoint licensing.
 
 ## Citation
 

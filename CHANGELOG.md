@@ -1,5 +1,11 @@
 # Changelog
 
+## September 14, 2026 — Checkpoint licensing update
+
+Code and checkpoints are now distributed under [Apache 2.0](LICENSE). Brain Treebank
+attribution is retained in [NOTICE](NOTICE). Earlier CC BY 4.0 grants remain valid.
+Checkpoint bytes, hashes, download URLs, and the original v0.1.0 tag are unchanged.
+
 ## v0.1.0
 
 Initial release of MAPA, a masked autoencoder for intracranial EEG.
@@ -25,5 +31,6 @@ included. Guard 2 does not reject evaluation windows. The generic frontend accep
 recordings and caller-supplied exclusions.
 
 The pretraining decoder and training loop are not included. See the [model card](MODEL_CARD.md)
-for results and limitations. Code is licensed under [Apache 2.0](LICENSE), and checkpoints under
-[CC BY 4.0](LICENSE-WEIGHTS).
+for results and limitations. At initial release, code was licensed under [Apache 2.0](LICENSE),
+and checkpoints under [CC BY 4.0](https://github.com/bentang18/MAPA/blob/v0.1.0/LICENSE-WEIGHTS).
+See the September 14 licensing update above for the current checkpoint license.
