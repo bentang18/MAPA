@@ -1,5 +1,10 @@
 # Changelog
 
+## September 14, 2026 — Paper available on arXiv
+
+[Pretraining for Sample-Efficient Neural Interfaces](https://arxiv.org/abs/2609.13507)
+is now available. Paper links and citations have been updated across the release.
+
 ## September 14, 2026 — Checkpoint licensing update
 
 Code and checkpoints are now distributed under [Apache 2.0](LICENSE). Brain Treebank

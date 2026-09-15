@@ -1,5 +1,7 @@
 # Model card
 
+Paper: [Pretraining for Sample-Efficient Neural Interfaces](https://arxiv.org/abs/2609.13507).
+
 ## Model
 
 MAPA is a masked autoencoder for intracranial EEG. An anatomical region embedding and a relative
@@ -139,8 +141,12 @@ Evaluation follows [Neuroprobe](https://github.com/insight-neuro/neuroprobe).
 
 ```bibtex
 @misc{tang2026pretraining,
-  title  = {Pretraining for Sample-Efficient Neural Interfaces},
-  author = {Tang, Ben and Spalding, Zachary and Cogan, Gregory B.},
-  year   = {2026}
+      title={Pretraining for Sample-Efficient Neural Interfaces},
+      author={Ben Tang and Zachary Spalding and Gregory B. Cogan},
+      year={2026},
+      eprint={2609.13507},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2609.13507},
 }
 ```

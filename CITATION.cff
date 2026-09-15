@@ -23,9 +23,13 @@ authors:
     email: gregory.cogan@duke.edu
 
 preferred-citation:
-  type: unpublished
+  type: article
   title: Pretraining for Sample-Efficient Neural Interfaces
   year: 2026
+  journal: arXiv
+  doi: 10.48550/arXiv.2609.13507
+  url: https://arxiv.org/abs/2609.13507
+  date-published: 2026-09-11
   authors:
     - given-names: Ben
       family-names: Tang
