@@ -6,8 +6,9 @@ What each license covers
 ================================================================================
 
 Source code and released model checkpoints are licensed under the Apache License,
-Version 2.0. See LICENSE. LICENSE-WEIGHTS contains the same Apache 2.0 license
-for standalone checkpoint downloads. The checkpoint license covers:
+Version 2.0. See LICENSE. The release attachment named LICENSE-WEIGHTS contains
+the same Apache 2.0 license for standalone checkpoint downloads. The checkpoint
+license covers:
 
     mapa_vits384.pt
     mapa_vits384_no_region.pt

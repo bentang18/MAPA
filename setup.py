@@ -25,7 +25,7 @@ if __name__ == "__main__":
         author_email="gregory.cogan@duke.edu",
         packages=find_packages(include=["mapa", "mapa.*"]),
         license=LICENSE,
-        license_files=("LICENSE", "LICENSE-WEIGHTS", "NOTICE"),
+        license_files=("LICENSE", "NOTICE"),
         classifiers=[
             "License :: OSI Approved :: Apache Software License",
             "Programming Language :: Python :: 3.10",
