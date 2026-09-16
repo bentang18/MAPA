@@ -7,6 +7,7 @@ Ben Tang, Zachary Spalding, Gregory B. Cogan · Duke University
 [![arXiv](https://img.shields.io/badge/arXiv-2609.13507-b31b1b.svg)](https://arxiv.org/abs/2609.13507)
 [![Project page](https://img.shields.io/badge/project-page-1f6feb.svg)](https://bentang18.github.io/mapa-page/)
 [![Checkpoints](https://img.shields.io/badge/checkpoints-v0.1.0-8250df.svg)](https://github.com/bentang18/MAPA/releases/tag/v0.1.0)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-MAPA-FFD21E?logo=huggingface)](https://huggingface.co/bentang18/MAPA)
 [![Benchmark](https://img.shields.io/badge/Benchmark-Neuroprobe-00897b.svg)](https://neuroprobe.dev/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-lightgrey.svg)](LICENSE)
 
@@ -214,7 +215,7 @@ submission export. CUDA and upstream Neuroprobe checks are skipped when unavaila
 ## License
 
 Code and checkpoints: [Apache 2.0](LICENSE).
-See [NOTICE](NOTICE) for attribution and prior checkpoint licensing.
+See [NOTICE](NOTICE) for attribution.
 
 ## Citation
 

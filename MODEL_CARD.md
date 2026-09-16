@@ -55,7 +55,8 @@ See the [preprocessing guide](docs/PREPROCESSING.md) and [configuration](mapa/pr
 
 ## Checkpoints
 
-Download the four files from the [v0.1.0 release](https://github.com/bentang18/MAPA/releases/tag/v0.1.0).
+Download the four files from the [v0.1.0 release](https://github.com/bentang18/MAPA/releases/tag/v0.1.0)
+or [Hugging Face](https://huggingface.co/bentang18/MAPA). Both host the same checkpoint files.
 The checkpoints are taken at step 55,000. Each records whether the region embedding and
 relative positional encoding are active. The decoder and optimizer are not included.
 
@@ -134,7 +135,7 @@ the target accuracy are retained as failures in the label-saving analysis.
 ## License and attribution
 
 Code and checkpoints: [Apache 2.0](LICENSE).
-The checkpoints carry the Brain Treebank attribution in [NOTICE](NOTICE), which also records prior checkpoint licensing.
+The checkpoints carry the Brain Treebank attribution in [NOTICE](NOTICE).
 Evaluation follows [Neuroprobe](https://github.com/insight-neuro/neuroprobe).
 
 ## Citation

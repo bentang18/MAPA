@@ -16,15 +16,6 @@ license covers:
     mapa_vits384_no_priors.pt
 
 ================================================================================
-Prior checkpoint licensing
-================================================================================
-
-Before September 14, 2026, these checkpoints were distributed under CC BY 4.0.
-That earlier license grant remains valid; this Apache 2.0 release does not revoke
-it. The checkpoint files are unchanged. The original license is preserved at:
-https://github.com/bentang18/MAPA/blob/v0.1.0/LICENSE-WEIGHTS
-
-================================================================================
 Attribution
 ================================================================================
 
