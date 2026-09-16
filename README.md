@@ -156,6 +156,9 @@ python -m notebook notebooks/quickstart.ipynb
 
 ## Checkpoints
 
+Also on [Hugging Face](https://huggingface.co/bentang18/MAPA): the same four released checkpoints,
+with a loading example and model card.
+
 | Entry point | Region embedding | Relative positional encoding |
 |---|---|---|
 | `mapa_vits384` | Yes | Yes |
