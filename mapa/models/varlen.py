@@ -1,5 +1,11 @@
 """Block-diagonal attention over a flat, ragged token set.
 
+Main path: _reference_block_diag() on CPU; gpu_block_diag() on CUDA.
+
+Input: Q/K/V (M,H,hd) and sequence boundaries.
+Output: context (M,H,hd), each token combining values only from its own block.
+Next: attention.py joins the heads and projects back to the model width.
+
 Tokens from every array in a session are laid end to end with no padding, and ``cu_seqlens``
 marks where each array's block starts. A token attends inside its own block and nowhere
 else. Two backends compute the same thing.
@@ -40,6 +46,8 @@ def _reference_block_diag(q: Tensor, k: Tensor, v: Tensor, cu_seqlens: Tensor) -
     seg = _segment_ids(cu_seqlens, total)
     same = seg[:, None] == seg[None, :]
     bias = torch.where(same, 0.0, NEG_INF_MASK).to(q.dtype)
+    # Per head/block: softmax(Q @ K.T / sqrt(head_dim), dim=-1) @ V.
+    # Rows are queries; softmax normalizes over key tokens.
     ctx = F.scaled_dot_product_attention(
         q.transpose(0, 1)[None], k.transpose(0, 1)[None], v.transpose(0, 1)[None],
         attn_mask=bias[None, None],
@@ -68,5 +76,6 @@ def gpu_block_diag(
             x, offsets=cu_seqlens_drop, min_seqlen=1, max_seqlen=max_seqlen
         ).transpose(1, 2)
 
+    # Same within-block attention, without allocating a full total-by-total mask.
     ctx = F.scaled_dot_product_attention(_nt(q), _nt(k), _nt(v))
     return ctx.transpose(1, 2).values()

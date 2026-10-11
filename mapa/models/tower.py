@@ -1,5 +1,13 @@
 """The frozen encoder: patch embedding plus transformer blocks.
 
+Main path: MaeEncoder.forward() calls stem -> pack -> encoder.
+
+Input: normalized band clips and a prepared metadata grid.
+Output: transformer features; this wrapper connects the three stages below.
+This file wires the stages together; stem.py transforms inputs, pack_r4.py
+arranges tokens, and towers.py runs the transformer stack. encoder.py wraps
+this path with checkpoint loading, metadata setup, and output reshaping.
+
 Pretraining wraps this in a masked autoencoder. The decoder reconstructs the frequency bins of
 the removed patches and is discarded when pretraining ends, so the released model is this module
 and nothing else. It runs the full set of patches, never a masked subset.
@@ -43,6 +51,8 @@ class MaeEncoder(nn.Module):
         *,
         tap_blocks: tuple[int, ...] = (),
     ) -> Tensor | tuple[Tensor, dict[int, Tensor]]:
+        # Two seconds: three (B,C,F_b,64) inputs -> token counts 8/32/64.
         tokens, _ = self.stem(bands)
+        # Concatenate bands and flatten contacts/tokens: (B,C,104,d) -> (B,C*104,d).
         x = pack_band_tokens(tokens, grid)
         return self.encoder.forward_flat(x, grid, region_packed, tap_blocks=tap_blocks)

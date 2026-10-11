@@ -1,5 +1,11 @@
 """The released checkpoint's offline voltage-to-bands recipe.
 
+Main path: prepare_recording() -> PreparedRecording.window().
+
+Input: a full voltage recording plus contact labels/regions.
+Output: cached STFT magnitudes and statistics; window() selects normalized clips.
+Next: models/stem.py turns each clip's frequency bins into learned tokens.
+
 Process a whole session, then slice windows on its 32 Hz clock. Raw arrays are
 channels × samples. Supply cleaned input and any explicit contact exclusions. No task labels are used.
 """
@@ -24,7 +30,9 @@ from mapa.preprocessing.stft import _single_stft_raw_view_chunked
 
 SAMPLE_RATE = 2048
 FRAME_RATE = 32
-# name, FFT length, first bin, last bin (inclusive)
+# name, FFT length, first bin, last bin (inclusive). Hz = bin * 2048 / FFT length.
+# Bin centers (inclusive): slow 2-14 Hz by 2; mid 16-56 by 8; fast 64-160 by 16.
+# Window lengths: 500/125/62.5 ms; all three use hop=64 samples (31.25 ms).
 BANDS = (("slow", 1024, 1, 7), ("mid", 256, 2, 7), ("fast", 128, 4, 10))
 
 
@@ -125,10 +133,17 @@ class PreparedRecording:
         snapped = start / FRAME_RATE
         if start_s + duration_s > self.duration_s or snapped + duration_s > self.duration_s:
             raise ValueError("window extends beyond the recording")
-        return [
-            norm.transform(band[..., start : start + frames]).unsqueeze(0).to(device)
-            for band, norm in zip(self.bands, self.normalizers)
-        ]
+        # Extract a clip from the cached STFT frames, not another FFT window.
+        # Normalize with the full-session median/sigma fitted in prepare_recording():
+        # z = (clip - median) / sigma; bins with sigma < 1e-6 become zero. No refit.
+        # (C,F_b,session_frames) -> (C,F_b,frames) -> (1,C,F_b,frames).
+        clip_bands = []
+        for band, norm in zip(self.bands, self.normalizers):
+            clip = band[..., start : start + frames]  # select cached STFT frames
+            normalized = norm.transform(clip)        # use stored session statistics
+            batched = normalized.unsqueeze(0)        # add the one-clip batch axis
+            clip_bands.append(batched.to(device))
+        return clip_bands
 
     def save(self, output_dir, *, subject_id, trial_id):
         """Write raw band caches/statistics compatible with the evaluation loader.
@@ -214,6 +229,7 @@ def prepare_recording(
     keep = set(labels) if keep_labels is None else set(keep_labels)
     if (bad | keep) - set(labels):
         raise ValueError("bad_labels/keep_labels contain labels absent from the recording")
+    # 1. Select contacts; keep the voltage rows and sidecar metadata aligned.
     original_indices = np.array([
         i for i, label in enumerate(labels) if label not in bad and label in keep
     ], dtype=np.int64)
@@ -225,17 +241,22 @@ def prepare_recording(
     sidecar = build_sidecar([labels[i] for i in original_indices], region_id=ids[original_indices])
     if any(int((sidecar.array_id == i).sum()) < 2 for i in range(sidecar.n_arrays)):
         raise ValueError("a surviving shaft has fewer than two contacts for mean referencing")
+    # 2. Resample to 2048 Hz when needed.
     factor = math.gcd(SAMPLE_RATE, int(sample_rate))
     if sample_rate != SAMPLE_RATE:
         x = resample_poly(x, SAMPLE_RATE // factor, int(sample_rate) // factor, axis=1).astype(
             np.float32
         )
-    # Research path: RawArray float64 -> shaft CAR -> harmonic notch + HPF -> float32.
+    # 3. Subtract each shaft's mean, then apply harmonic notches and a high-pass filter.
     model_voltage = _filter(_reference(x.astype(np.float64), sidecar), sidecar.labels).astype(
         np.float32
     )
     waveform = torch.from_numpy(model_voltage)
     bands, normalizers = [], []
+    # 4. Voltage (C,samples) -> magnitude STFT (C,F_b,session_frames), no log.
+    # Slow: 2-14 Hz, 7 bins, 500 ms window; mid: 16-56 Hz, 6 bins, 125 ms;
+    # fast: 64-160 Hz, 7 bins, 62.5 ms. Ranges are bin centers, inclusive.
+    # All bands use a 31.25 ms hop (32 frames/s); the stem subsamples later.
     for _, fft, lo, hi in BANDS:
         band = _single_stft_raw_view_chunked(
             waveform,
@@ -247,6 +268,9 @@ def prepare_recording(
             log_eps=1e-6,
             chunk_frames=chunk_frames,
         )
+        # 5. Fit once over session time, separately for each contact/frequency bin:
+        # median and sigma = 1.4826 * median(abs(band - median)), both (C,F_b,1).
+        # Keep raw magnitudes + these statistics; window() applies normalization.
         norm = SessionRobustZNormalizer(sigma_floor=1e-6).fit(band)
         bands.append(band)
         normalizers.append(norm)

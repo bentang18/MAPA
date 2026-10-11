@@ -1,13 +1,17 @@
-"""The encoder stack: twelve identical blocks over one session's flat token set.
+"""Twelve transformer blocks, each preserving token count and model width.
 
-Every block is the same within-array attention. There is no cross-array mixer, because a
-mixer over contacts that sit in different arrays reads the montage, and the montage is a
-property of the surgery rather than of the brain. Region identity enters once at the input
-and rides the residual into every block, so no block injects it again.
+Main path: Encoder.forward_flat().
 
-The output is the concatenation of four affine-normed taps at blocks 3, 6, 9 and 12,
-following the deep supervision of V-JEPA 2.1. Width is the only knob. Depth stays at twelve
-blocks and head dimension stays at 64, so the head count follows from the width.
+Input: flat tokens (B,total,d) and their metadata.
+Output: requested width-d layer features, plus the normalized multi-layer output.
+Next: attention.L1Block explains one block; encoder.py reshapes the returned taps.
+
+Region identity is added once at the stack input. Attention stays within each
+array/clip block. Blocks share the architecture and RoPE coordinates, not weights.
+
+With deep_sup enabled, the main output concatenates separately normalized taps
+3/6/9/12: width d -> 4d. Requested tap_blocks are returned separately as raw
+width-d features; MapaEncoder.forward uses those for inference.
 """
 
 from __future__ import annotations
@@ -106,14 +110,17 @@ class Encoder(nn.Module):
             raise ValueError(f"x_flat has {m} tokens, grid.total={grid.total}")
         device = x_flat.device
 
+        # 1. Add the atlas-region embedding to each token.
         region_bm = region_packed[None, :].expand(b_size, m)
         x_flat = x_flat + self.region_embed(region_bm).to(x_flat.dtype)
 
+        # 2. Give every clip its own array blocks before flattening the batch.
+        # E.g. [0,1040,2080] per clip -> [0,1040,2080,3120,4160] for two clips.
         offsets = torch.arange(b_size, device=device, dtype=torch.int64) * m
-        cu_b = torch.cat([
-            (grid.cu_seqlens[:-1].to(torch.int64)[None, :] + offsets[:, None]).reshape(-1),
-            torch.tensor([b_size * m], dtype=torch.int64, device=device),
-        ])
+        array_starts = grid.cu_seqlens[:-1].to(torch.int64)
+        batch_starts = array_starts[None, :] + offsets[:, None]  # (B,n_arrays)
+        final_end = torch.tensor([b_size * m], dtype=torch.int64, device=device)
+        cu_b = torch.cat([batch_starts.reshape(-1), final_end])
         keep = torch.ones_like(cu_b, dtype=torch.bool)
         keep[1:] = cu_b[1:] != cu_b[:-1]        # drop empty arrays and boundary coincidences
         cu_drop_b = cu_b[keep]
@@ -121,9 +128,11 @@ class Encoder(nn.Module):
 
         depth_b = grid.depth[None, :].expand(b_size, m).reshape(b_size * m)
         time_b = grid.time_pos[None, :].expand(b_size, m).reshape(b_size * m)
-        # One rotary table for the whole stack: every block holds the same schedule.
+        # 3. Build contact/time rotations once; reuse them in all 12 blocks.
         rope_cs = self.blocks[0].rope.cos_sin(depth_b, time_b)
 
+        # 4. Flatten to (B*total,d). Each block updates the same token positions.
+        # Read attention.L1Block.forward_flat() for one block, then return here.
         xf = x_flat.reshape(b_size * m, d)
         taps: dict[int, Tensor] = {}
         levels: list[Tensor] = []
@@ -131,11 +140,18 @@ class Encoder(nn.Module):
             xf = blk.forward_flat(
                 xf, depth_b, time_b, cu_b, cu_drop_b, grid.max_seqlen, rope_cs=rope_cs,
             )
+            # Inference taps keep width d; the main multi-level output has width 4d.
             if (i + 1) in tap_blocks:
                 taps[i + 1] = xf.reshape(b_size, m, d)
             if self.deep_sup and (i + 1) in self.sup_taps:
-                levels.append(self.norms_block[self.sup_taps.index(i + 1)](xf))
-        out = torch.cat(levels, dim=-1) if self.deep_sup else self.norm_out(xf)
+                level_index = self.sup_taps.index(i + 1)
+                normalized_level = self.norms_block[level_index](xf)
+                levels.append(normalized_level)
+        # Inference uses raw taps (d each); pretraining used normalized taps (4*d).
+        if self.deep_sup:
+            out = torch.cat(levels, dim=-1)  # (B*total,4*d)
+        else:
+            out = self.norm_out(xf)          # (B*total,d)
         out = out.reshape(b_size, m, out.shape[-1])
         if tap_blocks:
             return out, taps

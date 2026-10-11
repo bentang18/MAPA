@@ -41,6 +41,8 @@ class SessionRobustZNormalizer:
             if frames.dtype in (torch.float16, torch.float32, torch.float64)
             else frames.float()
         )
+        # Time is the last axis: (C,F,T_session) -> statistics (C,F,1).
+        # Each contact/bin gets its own median and scaled median absolute deviation.
         self.median = x.median(dim=-1, keepdim=True).values
         self.sigma = SCALE_TO_SIGMA * (x - self.median).abs().median(dim=-1, keepdim=True).values
         self._valid_bin_mask = valid_bin_mask
@@ -50,6 +52,8 @@ class SessionRobustZNormalizer:
         if self.median is None or self.sigma is None:
             raise RuntimeError("SessionRobustZNormalizer.transform called before fit()")
         x = x if x.dtype in (torch.float16, torch.float32, torch.float64) else x.float()
+        # Broadcast stored session statistics across the clip's time axis.
+        # Near-constant bins are set to zero below; clipping is done later in the stem.
         z = (x - self.median) / self.sigma.clamp(min=self.sigma_floor)
         z = torch.where(self.sigma >= self.sigma_floor, z, torch.zeros_like(z))
         if self._valid_bin_mask is not None:

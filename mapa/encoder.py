@@ -1,5 +1,11 @@
 """Frozen encoder API for per-contact feature extraction from intracranial EEG.
 
+Main path: prepare() builds metadata; forward() encodes windows and returns taps.
+
+This is the API wrapper, not another neural-network stage.
+prepare(): contact metadata + clip length -> reusable token-layout metadata.
+forward(): normalized clips + layout -> tower -> features grouped by contact.
+
 Inputs are three normalized magnitude STFT tensors and a SensorSidecar with the array identity,
 clinical contact number, and anatomical region of each contact. Outputs are keyed by encoder
 block. Block 0 returns the frontend baseline features; block 12 returns the final encoder features.
@@ -119,6 +125,7 @@ class MapaEncoder(nn.Module):
         if isinstance(n_time, bool) or not isinstance(n_time, Integral) or n_time <= 0:
             raise ValueError("n_time must be a positive integer on the 32 Hz frame clock")
         device = next(self.tower.parameters()).device
+        # Metadata only: group contacts, then expand contact/band/time per token.
         geom = build_l1_geometry(sidecar).to(device)
         grid = build_r4_grid(geom, n_time=int(n_time))
         region_id = sidecar.region_id.to(device)
@@ -140,11 +147,11 @@ class MapaEncoder(nn.Module):
         *,
         taps: Sequence[int] = (DEPTH,),
     ) -> dict[int, Tensor]:
-        """Encode a batch of windows.
+        """Encode windows and return selected layer features in grid contact order.
 
-        Returns ``{block: (B, n_contacts, k_full, d)}`` in grid contact order. The full stack
-        runs once whatever is asked for, so reading several blocks costs no extra forward.
-        Tap 0 is the stem input and runs no encoder at all.
+        Taps 1..12 have shape (B, contacts, K, d); all requested layers share
+        one encoder pass. Tap 0 flattens each contact's subsampled bins into
+        (B, contacts, 1, sum(F_b*T_b)); it skips the learned stem and encoder.
         """
         taps = tuple(taps)
         if not taps or any(
@@ -172,6 +179,7 @@ class MapaEncoder(nn.Module):
         if 0 in taps:
             out[0] = stem_input(bands, session)
         if gpu_taps:
+            # Use requested raw layer taps (width d), not the concatenated 4d output _z.
             _z, tapped = self.tower.forward(
                 list(bands), session.grid, session.region_packed, tap_blocks=gpu_taps
             )

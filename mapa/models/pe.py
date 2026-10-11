@@ -1,21 +1,21 @@
-"""The two spatial encodings, and the initialisation everything else follows.
+"""Rotary contact/time coordinates and learned anatomical region embeddings.
 
-L1RoPE is the relative positional encoding. The head dimension is split evenly between two
-axes, position along the array and time, each on the standard rotary schedule. Rotation is by
-absolute position, but the query-key score depends only on the difference, which is the
-property that matters: absolute position along an array is not shared across subjects, and
-only the ordering is.
+Main path: L1RoPE.cos_sin() builds angles; rotate() applies them to Q/K.
 
-The released rotary bases are 8 for clinical contact indices and 64 for time slots.
-Contact indices are not normalized to a common span: dropped contacts retain their
-original index gaps. These are ordinal positions, not measured millimeters. The
-checkpoint has no hard contact-count cutoff; longer shafts and two-dimensional
-ECoG grids require separate validation. Crossing a half-turn in one rotary pair
-does not establish a hard aliasing limit for the full rotary representation.
+Input: Q/K features plus each token's contact/time coordinates.
+Output: rotated Q/K with unchanged shapes; there are no learned RoPE parameters.
+Next: return to attention.py to compute attention with these Q/K and unchanged V.
 
-RegionIdentityEmbed is the region embedding: a learned table indexed by the DKT region a
-contact falls in, added to every token of that contact. The vocabulary is fixed by the atlas
-rather than learned per subject, so the table transfers even though it is learned.
+RoPE splits each head equally between clinical contact index and time on the
+32 Hz clock. Within each half, adjacent feature pairs rotate at fixed frequencies.
+Q and K are rotated; V is unchanged. For fixed Q/K content, a common coordinate
+offset leaves their rotary dot product unchanged.
+
+Released bases: contact 8, time 64. Contact indices preserve gaps and are ordinal,
+not physical distances. These settings do not imply a hard contact-count cutoff;
+generalization to longer shafts or two-dimensional grids needs validation.
+
+RegionIdentityEmbed is a learned atlas-region lookup added to each contact's tokens.
 """
 
 from __future__ import annotations
@@ -38,12 +38,13 @@ def init_transformer_weights(m: nn.Module, init_std: float = 0.02) -> None:
 
 
 def _rotate_half(x: Tensor) -> Tensor:
+    # Each adjacent feature pair (a,b) becomes (-b,a), a 90-degree rotation.
     x_paired = x.unflatten(-1, (-1, 2))  # (..., hd/2, 2)
     return torch.stack([-x_paired[..., 1], x_paired[..., 0]], dim=-1).flatten(-2)
 
 
 class L1RoPE(nn.Module):
-    """Mixed 2-axis (contact-index, time) rotary PE, equal head_dim split."""
+    """Two-axis axial RoPE: half of each head for contact, half for time."""
 
     def __init__(
         self,
@@ -61,16 +62,9 @@ class L1RoPE(nn.Module):
             )
         self.head_dim = head_dim
         self.space = bool(space)
-        pairs = head_dim // 4  # rotation pairs per axis
+        pairs = head_dim // 4  # head_dim=64: 16 pairs for contact + 16 for time
         idx_freq = 1.0 / (base_index ** (torch.arange(pairs).float() / pairs))
-        # ABLATION A2 (2026-07-28): space=False ZEROES the index frequencies, so
-        # ang_idx == 0 ⇒ cos 1 / sin 0 ⇒ the index pairs take the IDENTITY rotation.
-        # The head_dim split, pair convention and TIME half stay bit-identical; only
-        # the contact-index axis stops carrying position. Since RegionIdentityEmbed is
-        # region-level and band_type_emb is band-level, index-RoPE is the ONLY per-token
-        # carrier of within-array contact identity ⇒ this makes L1 attention genuinely
-        # permutation-invariant over contacts in a array. That is the control the
-        # "physics sensor-index tokenization" claim has never had.
+        # Disabling space makes contact rotations identity; time rotations remain.
         if not self.space:
             idx_freq = torch.zeros_like(idx_freq)
         t_freq = 1.0 / (base_time ** (torch.arange(pairs).float() / pairs))
@@ -85,6 +79,7 @@ class L1RoPE(nn.Module):
         block, which is the same arithmetic as rebuilding it and a good deal less of it.
         The table stays fp32 and the result is cast down afterwards, because rounding it
         first would change the numbers."""
+        # angle = coordinate * frequency (radians); frequencies are fixed buffers.
         ang_idx = idx[..., None].float() * self.idx_freq  # (..., seq, pairs)
         ang_t = t[..., None].float() * self.t_freq
         ang = torch.cat([ang_idx, ang_t], dim=-1)  # (..., seq, head_dim/2)
@@ -121,20 +116,12 @@ class RegionIdentityEmbed(nn.Module):
         super().__init__()
         self.d_model = d_model
         self.embed: nn.Embedding | None = None
-        # enabled=False = the R2 ablation arm: the table is NOT CONSTRUCTED (no dead param to
-        # weight-decay, and the checkpoint's param count is honest), and forward returns zeros.
-        # Every call site adds it to the residual (towers.py:165/196/279), so "return zeros" and
-        # "don't add it" are the SAME edit — the embed is purely additive, never concatenated.
+        # The disabled variant has no embedding parameters and returns zeros.
         if not enabled:
             return
         embed = nn.Embedding(n_regions, d_model)
         nn.init.trunc_normal_(embed.weight, std=init_std)
         self.embed = embed
-        # The table starts near zero, following V-JEPA 2.1, so the model grows into it. The
-        # table is added to every token and rides every block, so at the more usual 0.02 it
-        # would be about a fifth of the token signal at initialisation, which is a strong
-        # per-region prior from the first step and an invitation to memorise region identity
-        # rather than learn from the signal. It is weight decayed like any other 2-D table.
 
     def forward(self, region_id: Tensor) -> Tensor:
         """region_id: (..., seq) long → (..., seq, d_model)."""

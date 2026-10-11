@@ -1,15 +1,15 @@
-"""The token layout for one session: which token sits where in the flat set.
+"""Token coordinates and attention boundaries for a fixed session/window length.
 
-Each contact carries a different number of tokens per band, because the bands run at
-different rates on a shared 32 Hz clock. There is no rectangle to reshape through. This
-module lays the tokens out flat and array-contiguous, and records the coordinates attention
-reads: the clinical contact index, the position on the shared clock, and the bounds that
-delimit each array.
+Main path: build_r4_grid() prepares metadata; pack_band_tokens() arranges features.
 
-Token order is array first, then contact in canonical order within the array, then band in
-the order slow, mid, fast, then position within the band. Every array here is in that one
-order, and the layout depends only on the session and the window length, so it is built once
-and reused for every window.
+Input: per-band tokens and contact metadata.
+Output: flat tokens (B,total,d), matching coordinates, and array boundaries.
+Next: towers.Encoder.forward_flat() adds region identity and runs the blocks.
+
+Order: array -> contact -> band (slow, mid, fast) -> time within band.
+Every contact has K = sum(T_b) tokens. Band tensors concatenate into
+(B, C, K, d), then flatten to (B, C*K, d). R4Grid stores matching metadata,
+not features; cu_seqlens marks each array's start and end in the token axis.
 """
 
 from __future__ import annotations
@@ -98,7 +98,8 @@ def build_r4_grid(
     bandpos = pos_blk.repeat(n)
     time_pos = lat_blk.repeat(n)
 
-    # per-array token counts = n_s * k_full.
+    # Per-array token counts = contacts * K. Two 4-contact arrays at K=104:
+    # counts [416,416] -> boundaries [0,416,832].
     n_per_array = geom.valid.sum(dim=1).to(torch.long)  # (S,)
     seg = (n_per_array * k_full).to(torch.int32)  # (S,)
     cu = torch.zeros(S + 1, dtype=torch.int32, device=device)
@@ -121,8 +122,7 @@ def pack_band_tokens(band_tokens: Sequence[Tensor], grid: R4Grid) -> Tensor:
     whose contact, band and band position are ``grid.contact[t]``, ``grid.band[t]`` and
     ``grid.bandpos[t]``. The layout is not restated here: the contact order is read back off
     the grid, and the bands are concatenated in their fixed order.
-
-"""
+    """
     if len(band_tokens) != len(grid.band_lengths):
         raise ValueError(
             f"expected {len(grid.band_lengths)} band token streams, got {len(band_tokens)}"
@@ -130,6 +130,7 @@ def pack_band_tokens(band_tokens: Sequence[Tensor], grid: R4Grid) -> Tensor:
     b0 = band_tokens[0]
     B, d = b0.shape[0], b0.shape[-1]
     n = grid.total // grid.k_full
+    # 1. Read the array-grouped contact order from the metadata plan.
     canon = grid.contact.reshape(n, grid.k_full)[:, 0]  # (n,) contact index, canonical order
     blocks: list[Tensor] = []
     for band, (tok, length) in enumerate(zip(band_tokens, grid.band_lengths)):
@@ -138,5 +139,7 @@ def pack_band_tokens(band_tokens: Sequence[Tensor], grid: R4Grid) -> Tensor:
                 f"band {band} has {tok.shape[2]} tokens, grid expects {length}"
             )
         blocks.append(tok[:, canon])  # (B, n, T_b, d) reindexed to canonical contacts
-    x = torch.cat(blocks, dim=2)  # (B, n, k_full, d) — per contact [SLOW; MID; HGA]
-    return x.reshape(B, grid.total, d)
+    # 2. Concatenate each contact's bands, then flatten contacts and token positions.
+    contact_tokens = torch.cat(blocks, dim=2)  # (B,n,k_full,d): slow, mid, fast per contact
+    flat_tokens = contact_tokens.reshape(B, grid.total, d)  # (B,n*k_full,d)
+    return flat_tokens
