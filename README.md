@@ -4,7 +4,7 @@
 
 Ben Tang, Zachary Spalding, Gregory B. Cogan · Duke University
 
-**NeurIPS 2026 · BrainBodyFM Workshop** · [OpenReview](https://openreview.net/forum?id=olITkNAeHY)
+**NeurIPS 2026 · BrainBodyFM** · Oral Presentation
 
 [![arXiv](https://img.shields.io/badge/arXiv-2609.13507-b31b1b.svg)](https://arxiv.org/abs/2609.13507)
 [![Project page](https://img.shields.io/badge/project-page-1f6feb.svg)](https://bentang18.github.io/mapa-page/)
